@@ -7,16 +7,26 @@ import {
   Typography,
   Button,
   CardActionArea,
-  CardActions,
   Grid,
   Stack,
   Box,
+  TextField,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUser } from '../src/redux/actions/userAction';
-import { getPost } from '../src/redux/actions/postAction';
+import {
+  getPost,
+  addPost,
+  editPost,
+  deletePost,
+} from '../src/redux/actions/postAction';
 import { getAlbum } from '../src/redux/actions/albumAction';
-import { getPhoto } from '../src/redux/actions/photoAction';
+import {
+  getPhoto,
+  addPhoto,
+  editPhoto,
+  deletePhoto,
+} from '../src/redux/actions/photoAction';
 
 const styles = {
   container: {
@@ -30,6 +40,22 @@ function App() {
   const dispatch = useDispatch();
   const [openModal, setOpenModal] = useState(false);
   const [dataModal, setDataModal] = useState([]);
+  const [deleteStatus, setDeleteStatus] = useState('');
+  const [modif, setModif] = useState('');
+  const [modalModif, setModalModif] = useState(false);
+  const [modalCrud, setModalCrud] = useState(false);
+  const [dataModifPost, setDataModifPost] = useState({
+    title: '',
+    body: '',
+    userId: '',
+  });
+  const [dataModifPhoto, setDataModifPhoto] = useState({
+    albumId: '',
+    thumbnailUrl: '',
+    title: '',
+    url: '',
+  });
+  const [id, setId] = useState('');
   const userData = useSelector((state) => state.userReducer.dataUser);
   const postData = useSelector((state) => state.post.dataPost);
   const albumData = useSelector((state) => state.album.data);
@@ -37,19 +63,38 @@ function App() {
 
   useState(() => {
     dispatch(getUser());
-  });
-
-  useState(() => {
+    dispatch(getPhoto());
     dispatch(getPost());
-  });
-
-  useState(() => {
     dispatch(getAlbum());
   });
 
-  useState(() => {
-    dispatch(getPhoto());
-  });
+  const handleDelete = () => {
+    if (deleteStatus === 'post') {
+      dispatch(deletePost(id));
+      setModalModif(false);
+    } else {
+      dispatch(deletePhoto(id));
+      setModalModif(false);
+    }
+  };
+
+  const handleAdd = () => {
+    if (deleteStatus === 'post') {
+      if (modif === 'edit') {
+        dispatch(editPost(dataModifPost, id));
+      } else {
+        dispatch(addPost(dataModifPost));
+      }
+      setModalCrud(false);
+    } else {
+      if (modif === 'edit') {
+        dispatch(editPhoto(dataModifPhoto, id));
+      } else {
+        dispatch(addPhoto(dataModifPhoto));
+      }
+      setModalCrud(false);
+    }
+  };
 
   return (
     <div className="App" style={styles.container}>
@@ -104,6 +149,175 @@ function App() {
               : null}
           </Box>
         </Modal>
+
+        {/* modal konfirmasi */}
+        <Modal
+          open={modalModif}
+          onClose={() => setModalModif(false)}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Box
+            sx={{
+              backgroundColor: 'white',
+              width: '30%',
+              height: '20%',
+              padding: '20px',
+              overflow: 'scroll',
+            }}
+          >
+            <Typography
+              id="modal-modal-title"
+              variant="h6"
+              component="h2"
+              sx={{ marginBottom: '20px' }}
+            >
+              Apakah anda yakin ?
+            </Typography>
+            <Grid container direction={'row'}>
+              <Button
+                variant="contained"
+                onClick={() => handleDelete()}
+                sx={{ marginRight: '20px' }}
+              >
+                Ya
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => setModalModif(false)}
+              >
+                Tidak
+              </Button>
+            </Grid>
+          </Box>
+        </Modal>
+        {/* modal crud */}
+        <Modal
+          open={modalCrud}
+          onClose={() => {
+            setModalCrud(false);
+          }}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Box
+            sx={{
+              backgroundColor: 'white',
+              width: '50%',
+              height: '45%',
+              padding: '20px',
+              overflow: 'scroll',
+            }}
+          >
+            <Typography
+              id="modal-modal-title"
+              variant="h6"
+              component="h2"
+              sx={{ marginBottom: '20px' }}
+            >
+              Form data :
+            </Typography>
+            {deleteStatus === 'post' ? (
+              <>
+                <TextField
+                  id="outlined-basic"
+                  label="Title"
+                  sx={{ width: '100%', marginBottom: '20px' }}
+                  value={dataModifPost.title}
+                  onChange={(e) =>
+                    setDataModifPost({
+                      ...dataModifPost,
+                      title: e.target.value,
+                    })
+                  }
+                  variant="outlined"
+                />
+                <TextField
+                  id="outlined-basic"
+                  label="Body"
+                  sx={{ width: '100%', marginBottom: '20px' }}
+                  value={dataModifPost.body}
+                  onChange={(e) =>
+                    setDataModifPost({
+                      ...dataModifPost,
+                      body: e.target.value,
+                    })
+                  }
+                  variant="outlined"
+                />
+              </>
+            ) : (
+              <>
+                <TextField
+                  id="outlined-basic"
+                  label="Title"
+                  value={dataModifPhoto.title}
+                  sx={{ width: '100%', marginBottom: '20px' }}
+                  onChange={(e) =>
+                    setDataModifPhoto({
+                      ...dataModifPhoto,
+                      title: e.target.value,
+                    })
+                  }
+                  variant="outlined"
+                />
+                <TextField
+                  id="outlined-basic"
+                  label="Url"
+                  value={dataModifPhoto.url}
+                  sx={{ width: '100%', marginBottom: '20px' }}
+                  onChange={(e) =>
+                    setDataModifPhoto({
+                      ...dataModifPhoto,
+                      url: e.target.value,
+                    })
+                  }
+                  variant="outlined"
+                />
+                <TextField
+                  id="outlined-basic"
+                  label="Thumbnail Url"
+                  value={dataModifPhoto.thumbnailUrl}
+                  sx={{ width: '100%', marginBottom: '20px' }}
+                  onChange={(e) =>
+                    setDataModifPhoto({
+                      ...dataModifPhoto,
+                      thumbnailUrl: e.target.value,
+                    })
+                  }
+                  variant="outlined"
+                />
+              </>
+            )}
+            <Grid container direction={'row'}>
+              <Button
+                variant="contained"
+                onClick={() => handleAdd()}
+                sx={{ marginRight: '20px' }}
+              >
+                Simpan
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => setModalCrud(false)}
+              >
+                Batal
+              </Button>
+            </Grid>
+          </Box>
+        </Modal>
         <Typography variant="h5">List Data : </Typography>
         <br />
         <Grid container spacing={2} direction="row" display={'flex'}>
@@ -149,16 +363,59 @@ function App() {
                               >
                                 ....
                               </Typography>
-                              <Button
-                                size="small"
-                                color="primary"
-                                onClick={() => {
-                                  setOpenModal(true);
-                                  setDataModal(findPost);
-                                }}
-                              >
-                                See Detail
-                              </Button>
+                              <Grid container direction={'row'} spacing={2}>
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setOpenModal(true);
+                                    setDataModal(findPost);
+                                  }}
+                                >
+                                  See Detail
+                                </Button>
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setModalCrud(true);
+                                    setDeleteStatus('post');
+                                    setModif('add');
+                                  }}
+                                >
+                                  Add
+                                </Button>
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setModalCrud(true);
+                                    setDeleteStatus('post');
+                                    setId(findPost[0].id);
+                                    setModif('edit');
+                                    setDataModifPost({
+                                      ...dataModifPost,
+                                      title: findPost[0].title,
+                                      body: findPost[0].body,
+                                      userId: findPost[0].userId,
+                                    });
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setModalModif(true);
+                                    setDataModal(findPost);
+                                    setDeleteStatus('post');
+                                    setId(findPost[0].id);
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              </Grid>
                               <br />
                             </>
                           ) : null}
@@ -199,16 +456,60 @@ function App() {
                               >
                                 ....
                               </Typography>
-                              <Button
-                                size="small"
-                                color="primary"
-                                onClick={() => {
-                                  setOpenModal(true);
-                                  setDataModal(findPhoto);
-                                }}
-                              >
-                                See Detail
-                              </Button>
+                              <Grid container direction={'row'} spacing={2}>
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setOpenModal(true);
+                                    setDataModal(findPhoto);
+                                  }}
+                                >
+                                  See Detail
+                                </Button>
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setModalCrud(true);
+                                    setDeleteStatus('photo');
+                                    setModif('add');
+                                  }}
+                                >
+                                  Add
+                                </Button>
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setModalCrud(true);
+                                    setDeleteStatus('photo');
+                                    setId(findPhoto[0].id);
+                                    setModif('edit');
+                                    setDataModifPhoto({
+                                      ...dataModifPhoto,
+                                      title: findPhoto[0].title,
+                                      thumbnailUrl: findPhoto[0].thumbnailUrl,
+                                      url: findPhoto[0].url,
+                                      albumId: findPhoto[0].albumId,
+                                    });
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setModalModif(true);
+                                    setDataModal(findPost);
+                                    setDeleteStatus('photo');
+                                    setId(findPhoto[0].id);
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              </Grid>
                               <br />
                             </>
                           ) : null}
